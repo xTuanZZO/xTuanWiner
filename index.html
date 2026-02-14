@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Tài Chính Cá Nhân - 4 Ví</title>
+  <meta name="color-scheme" content="dark">
+  <style>
+    /* Tổng thể - Dark mode và hiện đại */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #181a20;
+      color: #fff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      box-sizing: border-box;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .grid {
+      flex: 1 1 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+      height: 100vh;
+      width: 100vw;
+      box-sizing: border-box;
+    }
+    .wallet {
+      background: #23262f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: solid 1.5px #23262f;
+      transition: border-color 0.2s;
+      position: relative;
+      padding: 8vw 2vw 2vw 2vw;
+    }
+    .wallet:focus-within {
+      border-color: #4ade80;
+    }
+    .wallet-title {
+      font-size: 1.33rem;
+      font-weight: 600;
+      margin-bottom: 0.5em;
+      color: #fff;
+      outline: none;
+      border: none;
+      background: transparent;
+      text-align: center;
+      width: 90%;
+      border-radius: 6px;
+      padding: 4px 0;
+      transition: background 0.2s;
+      min-height: 1.7em;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .wallet-title[contenteditable]:focus {
+      background: #292f38;
+    }
+    .wallet-title[contenteditable]:empty:before {
+      content: "Đặt tên ví...";
+      color: #a0aec0;
+      font-style: italic;
+    }
+    .wallet-balance {
+      margin-bottom: 1.1em;
+      font-size: 2.2rem;
+      font-weight: bold;
+      transition: color 0.2s;
+      text-shadow: 0 2px 18px #15151550;
+      letter-spacing: 1px;
+      min-width: 95px;
+      text-align: center;
+      line-height: 2.3rem;
+      word-break: break-all;
+    }
+    .wallet-balance.positive {
+      color: #22cc6f;
+    }
+    .wallet-balance.negative {
+      color: #fa5353;
+    }
+    .wallet-balance.zero {
+      color: #eee;
+    }
+    .wallet-buttons {
+      display: flex; gap: 1.1em;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 0.5em;
+      flex-wrap:wrap;
+    }
+    .wallet-btn {
+      background: linear-gradient(90deg, #23262f 56%, #383c4a 100%);
+      color: #e5e7eb;
+      border: none;
+      border-radius: 11px;
+      font-size: 1.25rem;
+      font-weight: 600;
+      padding: 0.8em 2em;
+      box-shadow: 0 2px 8px #2224;
+      margin: 0 0.1em;
+      min-width: 95px;
+      min-height: 45px;
+      transition: filter 0.1s,background .3s;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .wallet-btn:active {
+      filter: brightness(0.88);
+      background: #191b23;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr 1fr;}
+      .wallet-btn { font-size: 1.17rem; min-width: 80px; min-height: 46px;}
+      .wallet { padding: 2vw 3vw 3vw 3vw; }
+    }
+    @media (max-width: 450px) {
+      .wallet-balance { font-size: 1.4rem; min-width: 62px; }
+      .wallet-btn { font-size: 1.02rem; min-width: 60px; min-height: 37px; }
+      .wallet-title { font-size: 1rem;}
+      .wallet { padding: 2vw;}
+    }
+    /* Reset Button Styling */
+    .reset-btn {
+      position: absolute;
+      right: 20px; bottom: 18px;
+      z-index: 999;
+      background: #3b3f4aee;
+      color: #fff7;
+      font-size: 0.98rem;
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      box-shadow: 0 2px 8px #000b;
+      opacity: 0.18;
+      cursor: pointer;
+      transition: opacity 0.2s, background 0.15s;
+      outline: none;
+      user-select: none;
+    }
+    .reset-btn:focus, .reset-btn:hover {
+      opacity: 1;
+      color: #ff6565;
+      background: #39343b;
+    }
+    .reset-btn svg {
+      width: 20px; height: 20px;
+      pointer-events: none;
+    }
+    /* small visual tip on long tap */
+    .reset-btn::after {
+      content: 'RESET';
+      color: #fa5353;
+      font-size: 0.85em;
+      background: #222;
+      border-radius: 7px;
+      padding: 2px 6px;
+      opacity: 0; position: absolute; right: 38px; bottom: 5px;
+      pointer-events: none;
+      transition: opacity 0.17s;
+    }
+    .reset-btn:active::after,
+    .reset-btn:focus::after { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="grid" id="walletsGrid"></div>
+  <button class="reset-btn" title="Xóa tất cả dữ liệu về mặc định" tabindex="0" id="resetBtn" aria-label="Reset">
+    <svg viewBox="0 0 20 20"><path fill="currentColor" d="M10 3v2.06a6 6 0 1 1-6 6H2a8 8 0 1 0 8-8V3z"></path></svg>
+  </button>
+<script>
+const DEFAULT_WALLETS = [
+  { name: "Ví 1", balance: 0 },
+  { name: "Ví 2", balance: 0 },
+  { name: "Ví 3", balance: 0 },
+  { name: "Ví 4", balance: 0 }
+];
+const STORAGE_KEY = "walletsAppData4";
+const isIOS = !!navigator.userAgent.match(/iP(hone|od|ad)/i);
+
+// Helper: Load/Save
+function loadWallets() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return DEFAULT_WALLETS.map(x=>({...x}));
+    let arr = JSON.parse(data);
+    // Validate legacy/keyless/corrupted
+    if (!Array.isArray(arr) || arr.length!==4) throw 'Bad Data';
+    arr.forEach(w=>{ if(typeof w.balance !=='number' || typeof w.name!=='string') throw 'Bad Data'; });
+    return arr;
+  } catch (e) {
+    console.warn("LocalStorage unavailable/corrupt, dùng mặc định.",e);
+    return DEFAULT_WALLETS.map(x=>({...x}));
+  }
+}
+function saveWallets(wArr) {
+  try {
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(wArr));
+  } catch (e) { /* Incognito Safari hoặc full storage/readonly, ignore without UI crash! */ }
+}
+
+function updateWalletView(idx) {
+  const w = wallets[idx];
+  const walletDiv = document.querySelector(`[data-wallet='${idx}']`);
+  if (!walletDiv) return;
+  // Balance color
+  const v = w.balance;
+  let css = "wallet-balance ";
+  css += v===0?"zero": v>0?"positive":"negative";
+  walletDiv.querySelector(".wallet-balance").textContent = v.toLocaleString("vi-VN")+" ₫";
+  walletDiv.querySelector(".wallet-balance").className = css;
+  // Name
+  walletDiv.querySelector(".wallet-title").textContent = w.name;
+}
+
+function onNameEdit(e, idx) {
+  const el = e.currentTarget;
+  setTimeout(()=>{
+    let name = el.innerText.replace(/[
+]/g,'').trim().slice(0,32) || `Ví ${idx+1}`;
+    el.textContent = name;
+    wallets[idx].name = name;
+    saveWallets(wallets);
+    el.blur();
+  }, 1);
+}
+function onNameInput(e,idx) {
+  let name = e.currentTarget.innerText.replace(/[
+]/g,'').trim().slice(0,32);
+  if (name.length > 32) name = name.slice(0,32);
+  wallets[idx].name = name || `Ví ${idx+1}`;
+  saveWallets(wallets);
+}
+function adjustBalance(idx, delta) {
+  wallets[idx].balance += delta;
+  updateWalletView(idx);
+  saveWallets(wallets);
+}
+function createWalletDom(idx, data) {
+  // <div class="wallet" data-wallet="0">
+  //   <div class="wallet-title" contenteditable>BlaBla</div>
+  //   <div class="wallet-balance positive">100.000 ₫</div>
+  //   <div class="wallet-buttons">
+  //    <button>- 5k</button><button>+ 5k</button>
+  //   </div>
+  // </div>
+  const w = document.createElement("div");
+  w.className = "wallet";
+  w.dataset.wallet = idx;
+
+  const t = document.createElement("div");
+  t.className = "wallet-title";
+  t.setAttribute("contenteditable","true");
+  t.setAttribute("spellcheck", "false");
+  t.setAttribute("tabindex","0");
+  t.addEventListener("blur", e=>onNameEdit(e,idx));
+  t.addEventListener("keydown", e=>{ if(e.key==='Enter'){e.preventDefault(); t.blur();}});
+  t.addEventListener("input", e=>onNameInput(e,idx));
+  t.addEventListener("paste", e=>{
+    e.preventDefault();
+    let text=(e.clipboardData||window.clipboardData).getData("text/plain");
+    document.execCommand("insertText", false, text);
+  });
+  w.appendChild(t);
+
+  const num = document.createElement("div");
+  num.className = "wallet-balance zero";
+  w.appendChild(num);
+
+  const btns = document.createElement("div");
+  btns.className = "wallet-buttons";
+  
+  const b1 = document.createElement("button");
+  b1.className = "wallet-btn";
+  b1.textContent = "- 5k";
+  b1.addEventListener("click",()=>adjustBalance(idx,-5000), {passive:true});
+  b1.setAttribute('tabindex','0');
+
+  const b2 = document.createElement("button");
+  b2.className = "wallet-btn";
+  b2.textContent = "+ 5k";
+  b2.addEventListener("click",()=>adjustBalance(idx,5000), {passive:true});
+  b2.setAttribute('tabindex','0');
+
+  btns.appendChild(b1);
+  btns.appendChild(b2);
+  w.appendChild(btns);
+
+  // Block unwanted selection/copy
+  w.addEventListener('touchstart', e=>{
+    if(e.target.className!="wallet-title") e.preventDefault();
+  },{passive:false});
+
+  return w;
+}
+// -- Reset button logic
+const showConfirm = msg => window.confirm ? window.confirm(msg) : true;
+
+let wallets = loadWallets();
+function renderAllWallets() {
+  const grid = document.getElementById("walletsGrid");
+  grid.innerHTML = "";
+  for(let i=0;i<4;i++) {
+    const w = createWalletDom(i, wallets[i]);
+    grid.appendChild(w);
+    // Populate
+    updateWalletView(i);
+  }
+}
+renderAllWallets();
+
+document.getElementById("resetBtn").onclick = function(e) {
+  if (showConfirm("Bạn muốn xóa toàn bộ dữ liệu và đặt lại 4 ví về mặc định?")) {
+    wallets = DEFAULT_WALLETS.map(x=>({...x}));
+    saveWallets(wallets);
+    renderAllWallets();
+  }
+};
+// Prevent focus/soft select on mobile for non-editable fields
+document.body.addEventListener("touchstart", function(e){
+  if(!e.target.closest(".wallet-title")) e.preventDefault();
+}, {passive:false});
+document.body.addEventListener("mousedown", function(e) {
+  if(!e.target.closest(".wallet-title")) e.preventDefault();
+}, false);
+
+// Extra: Hide scroll/gray highlight
+document.addEventListener("DOMContentLoaded",()=>{
+  document.body.style.setProperty('overscroll-behavior','none');
+});
+// iOS: Prevent gray highlight on tap
+document.body.style.WebkitTapHighlightColor = "transparent";
+</script>
+</body>
+</html>
